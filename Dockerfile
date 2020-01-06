@@ -1,7 +1,7 @@
 FROM golang:alpine as builder
 
-COPY . /go/src/github.com/Luzifer/mapshare/frontend
-WORKDIR /go/src/github.com/Luzifer/mapshare/frontend
+COPY . /go/src/github.com/Luzifer/mapshare
+WORKDIR /go/src/github.com/Luzifer/mapshare
 
 RUN set -ex \
  && apk add --update git \
@@ -17,11 +17,11 @@ RUN set -ex \
  && apk --no-cache add \
       ca-certificates
 
-COPY --from=builder /go/bin/frontend /usr/local/bin/frontend
+COPY --from=builder /go/bin/mapshare /usr/local/bin/mapshare
 
 EXPOSE 3000
 
-ENTRYPOINT ["/usr/local/bin/frontend"]
+ENTRYPOINT ["/usr/local/bin/mapshare"]
 CMD ["--"]
 
 # vim: set ft=Dockerfile:
