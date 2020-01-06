@@ -1,4 +1,4 @@
-const app = new Vue({
+window.app = new Vue({
 
   created() {
     // Use defaults with custom icon paths
@@ -9,11 +9,14 @@ const app = new Vue({
       shadowUrl: '/asset/leaflet/marker-shadow.png',
     })
 
-    // This is only to detect another user updated the location
-    // therefore this is NOT cryptographically safe!
+    /*
+     * This is only to detect another user updated the location
+     * therefore this is NOT cryptographically safe!
+     */
     this.browserID = localStorage.getItem('browserID')
     if (!this.browserID) {
-      this.browserID = Math.random().toString(16).substr(2)
+      this.browserID = Math.random().toString(16)
+        .substr(2)
       localStorage.setItem('browserID', this.browserID)
     }
   },
@@ -38,12 +41,11 @@ const app = new Vue({
   methods: {
     initMap() {
       this.map = L.map('map')
-        .setView([0,0], 13)
+        .setView([0, 0], 13)
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(this.map)
-
     },
 
     shareLocation() {
@@ -73,9 +75,9 @@ const app = new Vue({
       this.socket = new WebSocket(`${window.location.href.split('#')[0].replace(/^http/, 'ws')}/ws`)
       this.socket.onclose = () => window.setTimeout(this.subscribe, 1000) // Restart socket
       this.socket.onmessage = evt => {
-        let loc= JSON.parse(evt.data)
+        const loc = JSON.parse(evt.data)
         loc.time = new Date(loc.time)
-        this.loc= loc
+        this.loc = loc
       }
     },
 
@@ -95,7 +97,7 @@ const app = new Vue({
       const center = [this.loc.lat, this.loc.lon]
 
       if (!this.marker) {
-        this.marker = L.marker(center, {icon:this.icon})
+        this.marker = L.marker(center, { icon: this.icon })
           .addTo(this.map)
       }
 
