@@ -103,11 +103,13 @@ func handleMapSubmit(w http.ResponseWriter, r *http.Request) {
 
 	pos.Time = time.Now()
 
+	reqRetainerLock.Lock()
 	if pos.Retained {
-		reqRetainerLock.Lock()
 		reqRetainer[mapID] = pos
-		reqRetainerLock.Unlock()
+	} else {
+		delete(reqRetainer, mapID)
 	}
+	reqRetainerLock.Unlock()
 
 	reqDistributorsLock.RLock()
 	defer reqDistributorsLock.RUnlock()
