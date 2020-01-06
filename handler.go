@@ -16,6 +16,7 @@ type position struct {
 	Lat      float64   `json:"lat"`
 	Lon      float64   `json:"lon"`
 	Retained bool      `json:"retained"`
+	SenderID string    `json:"sender_id"`
 	Time     time.Time `json:"time"`
 }
 
@@ -99,6 +100,8 @@ func handleMapSubmit(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	pos.Time = time.Now()
 
 	if pos.Retained {
 		reqRetainerLock.Lock()
