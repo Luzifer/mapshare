@@ -58,7 +58,7 @@ func handleMapSocket(w http.ResponseWriter, r *http.Request) {
 
 	// In case a retained position is available queue it
 	reqRetainerLock.RLock()
-	if p, ok := reqRetainer[mapID]; ok {
+	if p, ok := reqRetainer[mapID]; ok && time.Since(p.Time) < cfg.StateTimeout {
 		updates <- p
 	}
 	reqRetainerLock.RUnlock()
@@ -110,6 +110,12 @@ func handleMapSubmit(w http.ResponseWriter, r *http.Request) {
 		delete(reqRetainer, mapID)
 	}
 	reqRetainerLock.Unlock()
+
+	go func() {
+		if err := retainState(); err != nil {
+			log.WithError(err).Error("Unable to retain state to disk")
+		}
+	}()
 
 	reqDistributorsLock.RLock()
 	defer reqDistributorsLock.RUnlock()
