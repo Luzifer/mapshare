@@ -15,6 +15,7 @@ js_deps=(
 	# Must-have order
 	npm/vue@2/dist/vue.min.js
 	npm/bootstrap-vue@2/dist/bootstrap-vue.min.js
+	npm/vue-i18n@8.15.3/dist/vue-i18n.min.js
 
 	# Other packages
 	npm/axios@0.19.0/dist/axios.min.js

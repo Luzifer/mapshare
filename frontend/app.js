@@ -1,3 +1,59 @@
+const get_locale = (fallback = 'en') => {
+  const urlParams = new URLSearchParams(window.location.search)
+
+  for (const lc of [
+    urlParams.get('hl'),
+    navigator.languages,
+    navigator.language,
+    navigator.browserLanguage,
+    navigator.userLanguage,
+    fallback,
+  ]) {
+    if (!lc) {
+      continue
+    }
+
+    switch (typeof lc) {
+      case 'object':
+        if (lc.length > 0) {
+          return lc[0].split('-')[0]
+        }
+        break
+      case 'string':
+        return lc.split('-')[0]
+    }
+  }
+
+  return fallback
+}
+
+const i18n = new VueI18n({
+  locale: get_locale(),
+
+  messages: {
+    de: {
+      btnModalOK: 'OK',
+      optKeepSending: 'Position kontinuierlich senden',
+      optKeepSendingSub: '(wenn aktiviert, wird die Position gesendet, solange dieses Fenster offen ist)',
+      optRetainLocation: 'Position auf dem Server speichern',
+      optRetainLocationSub: '(neue Beobachter sehen die Position sofort)',
+      btnShareMyLocation: 'Meine Position senden!',
+      shareSettings: 'Einstellungen',
+      waitingForLocation: 'Warte auf Position...',
+    },
+    en: {
+      btnModalOK: 'OK',
+      optKeepSending: 'Keep sending location',
+      optKeepSendingSub: '(when enabled location is updated as long as this window is open)',
+      optRetainLocation: 'Retain location on server',
+      optRetainLocationSub: '(new viewers instantly see your location)',
+      btnShareMyLocation: 'Share my location!',
+      shareSettings: 'Share-Settings',
+      waitingForLocation: 'Waiting for location...',
+    },
+  },
+})
+
 window.app = new Vue({
 
   created() {
@@ -38,6 +94,8 @@ window.app = new Vue({
 
   el: '#app',
 
+  i18n,
+
   methods: {
     initMap() {
       this.map = L.map('map')
@@ -72,7 +130,12 @@ window.app = new Vue({
         this.socket = null
       }
 
-      this.socket = new WebSocket(`${window.location.href.split('#')[0].replace(/^http/, 'ws')}/ws`)
+      let socketAddr = window.location.href.replace(/^http/, 'ws')
+      socketAddr = socketAddr.split('#')[0]
+      socketAddr = socketAddr.split('?')[0]
+      socketAddr = `${socketAddr}/ws`
+
+      this.socket = new WebSocket(socketAddr)
       this.socket.onclose = () => window.setTimeout(this.subscribe, 1000) // Restart socket
       this.socket.onmessage = evt => {
         const loc = JSON.parse(evt.data)
