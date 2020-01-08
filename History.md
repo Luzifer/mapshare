@@ -1,3 +1,7 @@
+# 0.2.0 / 2020-01-08
+
+  * Add german localization
+
 # 0.1.2 / 2020-01-07
 
   * Fix missing frontend in container
