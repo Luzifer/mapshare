@@ -56,6 +56,13 @@ const i18n = new VueI18n({
 
 window.app = new Vue({
 
+  computed: {
+    zoom() {
+      const params = new URLSearchParams(window.location.search)
+      return params.has('zoom') ? parseInt(params.get('zoom')) : 13
+    }
+  },
+
   created() {
     // Use defaults with custom icon paths
     this.icon = L.icon({
@@ -99,7 +106,7 @@ window.app = new Vue({
   methods: {
     initMap() {
       this.map = L.map('map')
-        .setView([0, 0], 13)
+        .setView([0, 0], this.zoom)
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
