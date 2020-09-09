@@ -8,19 +8,19 @@ css_deps=(
 	npm/bootstrap-vue@2/dist/bootstrap-vue.min.css
 
 	# Other packages
-	npm/leaflet@1.6.0/dist/leaflet.min.css
+	npm/leaflet@1.7.1/dist/leaflet.min.css
 )
 
 js_deps=(
 	# Must-have order
 	npm/vue@2/dist/vue.min.js
 	npm/bootstrap-vue@2/dist/bootstrap-vue.min.js
-	npm/vue-i18n@8.15.3/dist/vue-i18n.min.js
+	npm/vue-i18n@8.21.0/dist/vue-i18n.min.js
 
 	# Other packages
-	npm/axios@0.19.0/dist/axios.min.js
-	npm/leaflet@1.6.0/dist/leaflet.min.js
-	npm/moment@2.24.0/min/moment.min.js
+	npm/axios@0.20.0/dist/axios.min.js
+	npm/leaflet@1.7.1/dist/leaflet.min.js
+	npm/moment@2.27.0/min/moment.min.js
 )
 
 leaflet_images=(
