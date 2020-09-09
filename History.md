@@ -1,3 +1,8 @@
+# 0.3.0 / 2020-09-09
+
+  * Allow to configure zoom through URL parameter
+  * Update dependencies
+
 # 0.2.0 / 2020-01-08
 
   * Add german localization
