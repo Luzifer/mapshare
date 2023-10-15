@@ -1,3 +1,5 @@
+/* global VueI18n */
+
 const get_locale = (fallback = 'en') => {
   const urlParams = new URLSearchParams(window.location.search)
 
@@ -14,13 +16,13 @@ const get_locale = (fallback = 'en') => {
     }
 
     switch (typeof lc) {
-      case 'object':
-        if (lc.length > 0) {
-          return lc[0].split('-')[0]
-        }
-        break
-      case 'string':
-        return lc.split('-')[0]
+    case 'object':
+      if (lc.length > 0) {
+        return lc[0].split('-')[0]
+      }
+      break
+    case 'string':
+      return lc.split('-')[0]
     }
   }
 
@@ -60,16 +62,16 @@ window.app = new Vue({
     zoom() {
       const params = new URLSearchParams(window.location.search)
       return params.has('zoom') ? parseInt(params.get('zoom')) : 13
-    }
+    },
   },
 
   created() {
     // Use defaults with custom icon paths
     this.icon = L.icon({
       ...L.Icon.Default.prototype.options,
-      iconUrl: '/asset/leaflet/marker-icon.png',
-      iconRetinaUrl: '/asset/leaflet/marker-icon-2x.png',
-      shadowUrl: '/asset/leaflet/marker-shadow.png',
+      iconUrl: '/asset/images/marker-icon.png',
+      iconRetinaUrl: '/asset/images/marker-icon-2x.png',
+      shadowUrl: '/asset/images/marker-shadow.png',
     })
 
     /*
@@ -159,7 +161,14 @@ window.app = new Vue({
         sender_id: this.browserID,
       }
 
-      return axios.put(window.location.href.split('#')[0], data)
+      return fetch(window.location.href.split('#')[0], {
+        body: JSON.stringify(data),
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'PUT',
+      })
         .catch(err => console.error(err))
     },
 

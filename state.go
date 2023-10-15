@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 func loadState() error {
@@ -16,11 +16,11 @@ func loadState() error {
 	}
 
 	if _, err := os.Stat(cfg.StateFile); err != nil {
-		log.WithError(err).Warn("Unable to load state, using empty state")
+		logrus.WithError(err).Warn("Unable to load state, using empty state")
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return errors.Wrap(err, "Unable to access state file")
+		return errors.Wrap(err, "accessing state file")
 	}
 
 	reqRetainerLock.Lock()
@@ -28,12 +28,15 @@ func loadState() error {
 
 	f, err := os.Open(cfg.StateFile)
 	if err != nil {
-		return errors.Wrap(err, "Unable to open state file")
+		return errors.Wrap(err, "opening state file")
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			logrus.WithError(err).Error("closing state file (leaked fd)")
+		}
+	}()
 
-	return errors.Wrap(json.NewDecoder(f).Decode(&reqRetainer), "Unable to decode state file")
-
+	return errors.Wrap(json.NewDecoder(f).Decode(&reqRetainer), "decoding state file")
 }
 
 func retainState() error {
@@ -44,14 +47,18 @@ func retainState() error {
 
 	f, err := os.Create(cfg.StateFile)
 	if err != nil {
-		return errors.Wrap(err, "Unable to create state file")
+		return errors.Wrap(err, "creating state file")
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			logrus.WithError(err).Error("closing state file (leaked fd)")
+		}
+	}()
 
 	reqRetainerLock.RLock()
 	defer reqRetainerLock.RUnlock()
 
-	var tmpState = make(map[string]position)
+	tmpState := make(map[string]position)
 	for m, p := range reqRetainer {
 		if time.Since(p.Time) > cfg.StateTimeout {
 			continue
@@ -59,5 +66,5 @@ func retainState() error {
 		tmpState[m] = p
 	}
 
-	return errors.Wrap(json.NewEncoder(f).Encode(tmpState), "Unable to encode state file")
+	return errors.Wrap(json.NewEncoder(f).Encode(tmpState), "encoding state file")
 }

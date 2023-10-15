@@ -9,7 +9,12 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
+)
+
+const (
+	websocketBufferSize     = 1024
+	websocketUpdatePoolSize = 10
 )
 
 type position struct {
@@ -27,8 +32,8 @@ var (
 	reqRetainerLock     = new(sync.RWMutex)
 
 	upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
+		ReadBufferSize:  websocketBufferSize,
+		WriteBufferSize: websocketBufferSize,
 	}
 )
 
@@ -45,7 +50,7 @@ func handleMapSocket(w http.ResponseWriter, r *http.Request) {
 		vars    = mux.Vars(r)
 		mapID   = vars["mapID"]
 		sockID  = uuid.Must(uuid.NewV4()).String()
-		updates = make(chan position, 10)
+		updates = make(chan position, websocketUpdatePoolSize)
 	)
 
 	// Register update channel
@@ -75,15 +80,19 @@ func handleMapSocket(w http.ResponseWriter, r *http.Request) {
 	// Open socket
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.WithError(err).Debug("Unable to open websocket")
+		logrus.WithError(err).Debug("opening websocket")
 		return
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			logrus.WithError(err).Error("closing socket connection (leaked fd)")
+		}
+	}()
 
 	// Send updates
 	for pos := range updates {
 		if err = conn.WriteJSON(pos); err != nil {
-			log.WithError(err).Debug("Unable to send position")
+			logrus.WithError(err).Debug("sending position")
 			return
 		}
 	}
@@ -113,7 +122,7 @@ func handleMapSubmit(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		if err := retainState(); err != nil {
-			log.WithError(err).Error("Unable to retain state to disk")
+			logrus.WithError(err).Error("retaining state to disk")
 		}
 	}()
 

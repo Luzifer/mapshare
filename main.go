@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/rconfig/v2"
 )
@@ -24,27 +24,34 @@ var (
 	version = "dev"
 )
 
-func init() {
+func initApp() error {
 	rconfig.AutoEnv(true)
 	if err := rconfig.ParseAndValidate(&cfg); err != nil {
-		log.Fatalf("Unable to parse commandline options: %s", err)
+		return errors.Wrap(err, "parsing CLI options")
 	}
 
-	if cfg.VersionAndExit {
-		fmt.Printf("mapshare %s\n", version)
-		os.Exit(0)
+	l, err := logrus.ParseLevel(cfg.LogLevel)
+	if err != nil {
+		return errors.Wrap(err, "parsing log level")
 	}
+	logrus.SetLevel(l)
 
-	if l, err := log.ParseLevel(cfg.LogLevel); err != nil {
-		log.WithError(err).Fatal("Unable to parse log level")
-	} else {
-		log.SetLevel(l)
-	}
+	return nil
 }
 
 func main() {
-	if err := loadState(); err != nil {
-		log.WithError(err).Fatal("Unable to load state")
+	var err error
+	if err = initApp(); err != nil {
+		logrus.WithError(err).Fatal("initializing app")
+	}
+
+	if cfg.VersionAndExit {
+		fmt.Printf("mapshare %s\n", version) //nolint:forbidigo
+		return
+	}
+
+	if err = loadState(); err != nil {
+		logrus.WithError(err).Fatal("loading state")
 	}
 
 	r := mux.NewRouter()
@@ -59,5 +66,14 @@ func main() {
 	r.HandleFunc("/{mapID}", handleMapSubmit).Methods(http.MethodPut)
 	r.HandleFunc("/{mapID}/ws", handleMapSocket).Methods(http.MethodGet)
 
-	log.WithError(http.ListenAndServe(cfg.Listen, r)).Error("HTTP server caused an error")
+	server := &http.Server{
+		Addr:              cfg.Listen,
+		Handler:           r,
+		ReadHeaderTimeout: time.Second,
+	}
+
+	logrus.WithField("version", version).Info("mapshare ready to serve")
+	if err = server.ListenAndServe(); err != nil {
+		logrus.WithError(err).Fatal("running HTTP server")
+	}
 }
