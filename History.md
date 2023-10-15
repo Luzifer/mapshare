@@ -1,3 +1,7 @@
+# 0.3.1 / 2023-10-15
+
+  * Update dependencies, fix linter errors, modernize code
+
 # 0.3.0 / 2020-09-09
 
   * Allow to configure zoom through URL parameter
